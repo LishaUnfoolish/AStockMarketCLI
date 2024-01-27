@@ -78,11 +78,11 @@ def determine_exchange(stock_code):
 def get_stock_real_time_data(*codes):
     detail_url = "http://qt.gtimg.cn/q=" + concat_code(*codes)
     detail_index_to_values = {
-        1: '股票名称',
-        2: '股票代码',
-        3: '当前价格',
-        4: '昨收',
-        5: '开盘价',
+        1: '名称',
+        # 2: '股票代码',
+        3: '现',
+        # 4: '昨收',
+        5: '开',
         # 6: '成交量',
         # 7: '外盘（不准）',
         # 8: '内盘（不准）',
@@ -152,3 +152,4 @@ def get_stock_real_time_data(*codes):
 if __name__ == '__main__':
     get_stock_real_time_data("603333","600066","603099")
     
+
