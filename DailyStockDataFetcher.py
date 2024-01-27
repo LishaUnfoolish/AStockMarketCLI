@@ -95,7 +95,6 @@ try:
             # Get the stock name, initial price, and open price from the stock info
             stock_name = stock_info['name']
             initial_price = stock_info['init']
-            open_price = float(stock_info['open'])
             # Get the last price from the response data and convert it to float
             last_price = float(stock_data['lastPrice'])
             # Calculate the increase rate from initial price
@@ -104,13 +103,20 @@ try:
             else:
                 increase_rate_init = 0
             # Calculate the increase rate from open price
-            if open_price != 0:
-                increase_rate_open = round((last_price - open_price) / open_price * 100, 3)
+            open_price = stock_info.get('open')
+            if open_price is not None:
+                open_price = float(open_price)
+                if open_price != 0:
+                    increase_rate_open = round((last_price - open_price) / open_price * 100, 3)
+                else:
+                    increase_rate_open = 0
             else:
                 increase_rate_open = 0
             print(f"{stock_name}|开:{open_price}|现:{last_price}|仓R:{increase_rate_init}%|开R:{increase_rate_open}%|")
         print(f"----------------------------------------------------")
         # Pause for 1 second
         time.sleep(1)
+except KeyboardInterrupt:
+    print("\nstop\n")
 except KeyboardInterrupt:
     print("\nstop\n")
