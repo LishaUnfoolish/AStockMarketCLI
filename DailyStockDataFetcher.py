@@ -40,13 +40,12 @@ def fetch_stock_data(stock_code):
         'datalen': '1'  # 返回数据的数量，这里设置为1，因为我们只需要最新的数据
     }
 
-    # 发送请求获取数据
     response = requests.get(url, params=params)
+    if response.status_code != 200:
+        print(f"Request failed with status {response.status_code}")
+    return response.json()
 
-    # 解析响应内容
-    data = response.json()
 
-    return data
 
 # 通过fetch_stock_data接口返回的day判断当前时间是否在交易时间内
 def is_trading_time(stock_code):
