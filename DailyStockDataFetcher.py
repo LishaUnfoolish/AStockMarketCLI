@@ -174,7 +174,7 @@ def get_stock_real_time_data(*codes):
 paused = False
 def on_press(key):
     global paused
-    if key == keyboard.Key.space:
+    if key == keyboard.Key.esc:
         paused = not paused
         os.system('cls' if os.name == 'nt' else 'clear')
 
