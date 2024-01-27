@@ -48,7 +48,19 @@ def fetch_stock_data(stock_code):
 
     return data
 
-
+# 通过fetch_stock_data接口返回的day判断当前时间是否在交易时间内
+def is_trading_time(stock_code):
+    data = fetch_stock_data(stock_code)
+    if data:
+        day = data[0]['day']
+        if day == time.strftime("%Y-%m-%d", time.localtime()):
+            return True
+        else:
+            return False
+    else:
+        return False
+    
+    
 def create_data(stock_dict):
     for code in stock_dict.keys():
         data = fetch_stock_data(code)
@@ -74,6 +86,8 @@ response_data = json.loads(response.text)
 try:
     while True:
         # Extract the lastPrice for each stock
+        if is_trading_time('600519') == False:
+            print(f"非交易时间")
         for stock_id, stock_data in response_data['Result']['trend'].items():
             # Extract the stock code from the stock_id
             stock_code = stock_id.split('_')[-1]
@@ -87,21 +101,17 @@ try:
             last_price = float(stock_data['lastPrice'])
             # Calculate the increase rate from initial price
             if initial_price != 0:
-                increase_rate_init = (last_price - initial_price) / initial_price * 100
+                increase_rate_init = round((last_price - initial_price) / initial_price * 100, 3)
             else:
                 increase_rate_init = 0
             # Calculate the increase rate from open price
             if open_price != 0:
-                increase_rate_open = (last_price - open_price) / open_price * 100
+                increase_rate_open = round((last_price - open_price) / open_price * 100, 3)
             else:
                 increase_rate_open = 0
-            print(f"{stock_name}|{last_price}|{increase_rate_init}%|{increase_rate_open}%")
+            print(f"{stock_name}|开:{open_price}|现:{last_price}|仓R:{increase_rate_init}%|开R:{increase_rate_open}%|")
         print(f"----------------------------------------------------")
         # Pause for 1 second
         time.sleep(1)
 except KeyboardInterrupt:
     print("\nstop\n")
-
-
-
-
