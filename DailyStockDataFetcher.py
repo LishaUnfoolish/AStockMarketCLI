@@ -1,6 +1,19 @@
 import requests
 import json
 import time
+import requests
+from tabulate import tabulate
+
+stock_dict = {
+    '603333': {'name': '尚', 'init': 6.505},
+    '600066': {'name': '宇', 'init': 16.070},
+    '603099': {'name': '长', 'init': 32.773}
+}
+name_width = 1
+price_width = 7
+rate_width = 7
+all_stock_info=True
+
 headers = {
     'authority': 'finance.pae.baidu.com',
     'accept': 'application/vnd.finance-web.v1+json',
@@ -19,19 +32,91 @@ headers = {
     'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
 }
 
+def determine_exchange(stock_code):
+    if stock_code.startswith('60'):
+        return 'sh'
+    elif stock_code.startswith('00') or stock_code.startswith('300'):
+        return 'sz'
+    else:
+        raise ValueError("股票代码格式不正确，应以'60'或'00'开头")
+
+
+
+def tx_get_stock_data(stock_code):
+    exchange = determine_exchange(stock_code)
+    url = f"http://qt.gtimg.cn/q={exchange}{stock_code}"
+    response = requests.get(url)
+    data = response.text.split("~")
+
+    stock_info = {
+        "名称": data[1],
+        "代码": data[2],
+        "当前价格": float(data[3]),
+        "昨日收盘价": float(data[4]),
+        "开盘价": float(data[5]),
+        "成交量": int(data[6]),
+        "外盘": int(data[7]),
+        "内盘": int(data[8]),
+        # "买一价": float(data[9]),
+        # "买一量": int(data[10]),
+        # "买二价": float(data[11]),
+        # "买二量": int(data[12]),
+        # "买三价": float(data[13]),
+        # "买三量": int(data[14]),
+        # "买四价": float(data[15]),
+        # "买四量": int(data[16]),
+        # "买五价": float(data[17]),
+        # "买五量": int(data[18]),
+        # "卖一价": float(data[19]),
+        # "卖一量": int(data[20]),
+        # "卖二价": float(data[21]),
+        # "卖二量": int(data[22]),
+        # "卖三价": float(data[23]),
+        # "卖三量": int(data[24]),
+        # "卖四价": float(data[25]),
+        # "卖四量": int(data[26]),
+        # "卖五价": float(data[27]),
+        # "卖五量": int(data[28]),
+        # "最新成交": data[29],
+        # "时间": data[30],
+        "价格变动": float(data[31]),
+        "价格变动百分比": float(data[32]),
+        "最高价": float(data[33]),
+        "最低价": float(data[34]),
+        # "成交量金额": data[35],
+        # "手数": int(data[36]),
+        # "成交额": int(data[37]),
+        # "换手率": float(data[38]),
+        # "市盈率": float(data[39]),
+        # "最高价2": float(data[41]),
+        # "最低价2": float(data[42]),
+        "振幅": float(data[43]),
+        # "流通市值": float(data[44]),
+        # "总市值": float(data[45]),
+        # "市净率": float(data[46]),
+        "涨停价": float(data[47]),
+        "跌停价": float(data[48]),
+    }
+    return stock_info
+
+def fetch_and_print_stock_info(stock_code):
+    # Fetch the stock data
+    stock_data = tx_get_stock_data(stock_code)
+
+    # Convert the dictionary to a list of tuples for tabulate
+    table_data = [list(stock_data.keys()), list(stock_data.values())]
+
+    # Print the data in a table format
+    print(tabulate(table_data,tablefmt='fancy_grid'))
+
+
 
 def fetch_stock_data(stock_code):
     # 新浪财经API的URL
     url = 'http://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData'
     # [{'day': '2024-01-26', 'open': '5.480', 'high': '5.710', 'low': '5.420', 'close': '5.570', 'volume': '54359000'}]
     # 根据股票代码推断交易所
-    if stock_code.startswith('60'):
-        exchange = 'sh'
-    elif stock_code.startswith('00') or stock_code.startswith('300'):
-        exchange = 'sz'
-    else:
-        raise ValueError("股票代码格式不正确，应以'60'或'00'开头")
-
+    exchange = determine_exchange(stock_code)
     # 构建请求参数
     params = {
         'symbol': f'{exchange}{stock_code}',  # 完整的股票代码
@@ -71,14 +156,7 @@ def create_data(stock_dict):
         'finClientType': 'pc'
     }
 
-stock_dict = {
-    '603333': {'name': '尚', 'init': 6.505},
-    '600066': {'name': '宇', 'init': 16.070},
-    '603099': {'name': '长', 'init': 32.773}
-}
-name_width = 1
-price_width = 7
-rate_width = 7
+
 
 create_data(stock_dict)
 data = create_data(stock_dict)
@@ -96,29 +174,32 @@ try:
         for stock_id, stock_data in response_data['Result']['trend'].items():
             # Extract the stock code from the stock_id
             stock_code = stock_id.split('_')[-1]
-            # Get the stock info from the stock_dict
-            stock_info = stock_dict.get(stock_code, {"name": "Unknown Stock", "init": 0, "open": 0})
-            # Get the stock name, initial price, and open price from the stock info
-            stock_name = stock_info['name']
-            initial_price = stock_info['init']
-            # Get the last price from the response data and convert it to float
-            last_price = float(stock_data['lastPrice'])
-            # Calculate the increase rate from initial price
-            if initial_price != 0:
-                increase_rate_init = round((last_price - initial_price) / initial_price * 100, 3)
+            if all_stock_info == True:
+                fetch_and_print_stock_info(stock_code)
             else:
-                increase_rate_init = 0
-            # Calculate the increase rate from open price
-            open_price = stock_info.get('open')
-            if open_price is not None:
-                open_price = float(open_price)
-                if open_price != 0:
-                    increase_rate_open = round((last_price - open_price) / open_price * 100, 3)
+                # Get the stock info from the stock_dict
+                stock_info = stock_dict.get(stock_code, {"name": "Unknown Stock", "init": 0, "open": 0})
+                # Get the stock name, initial price, and open price from the stock info
+                stock_name = stock_info['name']
+                initial_price = stock_info['init']
+                # Get the last price from the response data and convert it to float
+                last_price = float(stock_data['lastPrice'])
+                # Calculate the increase rate from initial price
+                if initial_price != 0:
+                    increase_rate_init = round((last_price - initial_price) / initial_price * 100, 3)
+                else:
+                    increase_rate_init = 0
+                # Calculate the increase rate from open price
+                open_price = stock_info.get('open')
+                if open_price is not None:
+                    open_price = float(open_price)
+                    if open_price != 0:
+                        increase_rate_open = round((last_price - open_price) / open_price * 100, 3)
+                    else:
+                        increase_rate_open = 0
                 else:
                     increase_rate_open = 0
-            else:
-                increase_rate_open = 0
-            print(f"{stock_name.ljust(name_width)}|{str(open_price).rjust(price_width)}|{str(last_price).rjust(price_width)}|{str(increase_rate_init).rjust(rate_width)}%|{str(increase_rate_open).rjust(rate_width)}%|")
+                print(f"{stock_name.ljust(name_width)}|{str(open_price).rjust(price_width)}|{str(last_price).rjust(price_width)}|{str(increase_rate_init).rjust(rate_width)}%|{str(increase_rate_open).rjust(rate_width)}%|")
         # Pause for 1 second
         time.sleep(1)
 except KeyboardInterrupt:
