@@ -36,10 +36,6 @@ response = requests.post('https://finance.pae.baidu.com/selfselect/gettrenddata'
 response_data = json.loads(response.text)
 
 while True:
-    data = create_data(stock_dict)
-    response = requests.post('https://finance.pae.baidu.com/selfselect/gettrenddata', headers=headers, data=data)
-    response_data = json.loads(response.text)
-
     # Extract the lastPrice for each stock
     for stock_id, stock_data in response_data['Result']['trend'].items():
         # Extract the stock code from the stock_id
