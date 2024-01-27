@@ -76,6 +76,9 @@ stock_dict = {
     '600066': {'name': '宇', 'init': 16.070},
     '603099': {'name': '长', 'init': 32.773}
 }
+name_width = 1
+price_width = 7
+rate_width = 7
 
 create_data(stock_dict)
 data = create_data(stock_dict)
@@ -87,6 +90,9 @@ try:
     if is_trading_time('600519') == False:
         print(f"非交易时间")
     while True:
+        print(f"----------------------------------------------------")
+        print(f"{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}")
+        # print("名".ljust(name_width) + "|" + "开".rjust(price_width) + "|" + "现".rjust(price_width) + "|" + "仓R".rjust(rate_width) + "|" + "开R".rjust(rate_width) + "|")
         for stock_id, stock_data in response_data['Result']['trend'].items():
             # Extract the stock code from the stock_id
             stock_code = stock_id.split('_')[-1]
@@ -112,8 +118,7 @@ try:
                     increase_rate_open = 0
             else:
                 increase_rate_open = 0
-            print(f"{stock_name}|开:{open_price}|现:{last_price}|仓R:{increase_rate_init}%|开R:{increase_rate_open}%|")
-        print(f"----------------------------------------------------")
+            print(f"{stock_name.ljust(name_width)}|{str(open_price).rjust(price_width)}|{str(last_price).rjust(price_width)}|{str(increase_rate_init).rjust(rate_width)}%|{str(increase_rate_open).rjust(rate_width)}%|")
         # Pause for 1 second
         time.sleep(1)
 except KeyboardInterrupt:
