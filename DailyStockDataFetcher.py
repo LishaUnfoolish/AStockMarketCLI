@@ -1,36 +1,71 @@
-import requests
-import json
-import time
-import requests
+from urllib import request
+import re
 from tabulate import tabulate
 
-stock_dict = {
-    '603333': {'name': '尚', 'init': 6.505},
-    '600066': {'name': '宇', 'init': 16.070},
-    '603099': {'name': '长', 'init': 32.773}
-}
-name_width = 1
-price_width = 7
-rate_width = 7
-all_stock_info=True
+def extract_stock_data(url, encoding="gb2312"):
+    """
+    抽取股票数据
+    :param url:
+    :param encoding: 默认gb2312
+    :return: list(list)
+    """
+    # 发起请求
+    req = request.Request(url)
+    # 获取响应
+    rsp = request.urlopen(req)
+    res = rsp.read().decode("gb2312")
+    stock_arr = res.split(";")
+    stock_arr.pop()
+    return stock_arr
 
-headers = {
-    'authority': 'finance.pae.baidu.com',
-    'accept': 'application/vnd.finance-web.v1+json',
-    'accept-language': 'en,zh-CN;q=0.9,zh;q=0.8',
-    'acs-token': 'your_acs_token',
-    'content-type': 'application/x-www-form-urlencoded',
-    'cookie': 'your_cookies',
-    'origin': 'https://gushitong.baidu.com',
-    'referer': 'https://gushitong.baidu.com/',
-    'sec-ch-ua': '"Not?A_Brand";v="8", "Chromium";v="108", "Google Chrome";v="108"',
-    'sec-ch-ua-mobile': '?0',
-    'sec-ch-ua-platform': '"Linux"',
-    'sec-fetch-dest': 'empty',
-    'sec-fetch-mode': 'cors',
-    'sec-fetch-site': 'same-site',
-    'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
-}
+
+def process_stock_data(stock_arr, index_dict):
+    """
+    对股票数据进行预处理，获取指定下标的数据
+    :param stock_arr:
+    :param index_dict:
+    :return: list(dict)
+    """
+    result_list = []
+    for stock in stock_arr:
+        inner_map = {}
+        start = stock.find("\"")
+        end = stock.rfind("\"")
+        rest = stock[start + 1:end]
+        arr = rest.split("~")
+        for x in range(len(arr)):
+            if x in index_dict.keys():
+                if x == 0:
+                    print(arr[x])
+                    match_res = re.match("^([sh|sz]{2})(\d{6})$", arr[x])
+                    if match_res:
+                        arr[x] = match_res.group(2)
+                inner_map[index_dict[x]] = arr[x]
+        result_list.append(inner_map)
+    return result_list
+
+
+def concat_code(*codes, prefix="", suffix=","):
+    """
+    根据前后缀拼接股票代码
+    :param codes: 可变参数
+    :param prefix: 默认”“
+    :param suffix: 默认”,"
+    :return: str
+    """
+    result = ""
+    for index in range(len(codes)):
+        exchange=determine_exchange(codes[index])
+        result += (prefix + exchange+codes[index] + suffix)
+    if len(suffix) > 0:
+        result = result[0:-1]
+    return result
+
+def print_as_table(data):
+    headers = data[0].keys()
+    rows = [x.values() for x in data]
+
+    print(tabulate(rows, headers, tablefmt="grid"))
 
 def determine_exchange(stock_code):
     if stock_code.startswith('60'):
@@ -40,167 +75,80 @@ def determine_exchange(stock_code):
     else:
         raise ValueError("股票代码格式不正确，应以'60'或'00'开头")
 
-
-
-def tx_get_stock_data(stock_code):
-    exchange = determine_exchange(stock_code)
-    url = f"http://qt.gtimg.cn/q={exchange}{stock_code}"
-    response = requests.get(url)
-    data = response.text.split("~")
-
-    stock_info = {
-        "名称": data[1],
-        "代码": data[2],
-        "当前价格": float(data[3]),
-        "昨日收盘价": float(data[4]),
-        "开盘价": float(data[5]),
-        "成交量": int(data[6]),
-        "外盘": int(data[7]),
-        "内盘": int(data[8]),
-        # "买一价": float(data[9]),
-        # "买一量": int(data[10]),
-        # "买二价": float(data[11]),
-        # "买二量": int(data[12]),
-        # "买三价": float(data[13]),
-        # "买三量": int(data[14]),
-        # "买四价": float(data[15]),
-        # "买四量": int(data[16]),
-        # "买五价": float(data[17]),
-        # "买五量": int(data[18]),
-        # "卖一价": float(data[19]),
-        # "卖一量": int(data[20]),
-        # "卖二价": float(data[21]),
-        # "卖二量": int(data[22]),
-        # "卖三价": float(data[23]),
-        # "卖三量": int(data[24]),
-        # "卖四价": float(data[25]),
-        # "卖四量": int(data[26]),
-        # "卖五价": float(data[27]),
-        # "卖五量": int(data[28]),
-        # "最新成交": data[29],
-        # "时间": data[30],
-        "价格变动": float(data[31]),
-        "价格变动百分比": float(data[32]),
-        "最高价": float(data[33]),
-        "最低价": float(data[34]),
-        # "成交量金额": data[35],
-        # "手数": int(data[36]),
-        # "成交额": int(data[37]),
-        # "换手率": float(data[38]),
-        # "市盈率": float(data[39]),
-        # "最高价2": float(data[41]),
-        # "最低价2": float(data[42]),
-        "振幅": float(data[43]),
-        # "流通市值": float(data[44]),
-        # "总市值": float(data[45]),
-        # "市净率": float(data[46]),
-        "涨停价": float(data[47]),
-        "跌停价": float(data[48]),
+def get_stock_real_time_data(*codes):
+    detail_url = "http://qt.gtimg.cn/q=" + concat_code(*codes)
+    detail_index_to_values = {
+        1: '股票名称',
+        2: '股票代码',
+        3: '当前价格',
+        4: '昨收',
+        5: '开盘价',
+        # 6: '成交量',
+        # 7: '外盘（不准）',
+        # 8: '内盘（不准）',
+        # 9: '买一',
+        # 10: '买一量(手)',
+        # 11: '买二',
+        # 12: '买二量(手)',
+        # 13: '买三',
+        # 14: '买三量(手)',
+        # 15: '买四',
+        # 16: '买四量(手)',
+        # 17: '买五',
+        # 18: '买五量(手)',
+        # 19: '卖一',
+        # 20: '卖一量(手)',
+        # 21: '卖二',
+        # 22: '卖二量(手)',
+        # 23: '卖三',
+        # 24: '卖三量(手)',
+        # 25: '卖四',
+        # 26: '卖四量(手)',
+        # 27: '卖五',
+        # 28: '卖五量(手)',
+        # 29: '最近逐笔成交',
+        # 30: '时间',
+        # 31: '涨跌',
+        32: '涨跌(%)',
+        # 33: '最高价',
+        # 34: '最低价',
+        # 35: '价格/成交量(手)/成交额',
+        # 36: '成交量(手)',
+        # 37: '成交额(万)',
+        # 38: '换手率(%)',
+        # 39: '市盈率',
+        # 40: '',  # 这里没有提供对应的值，所以留空
+        # 41: '最高价',  # 注意这里重复了，可能是因为数据错误或者需要合并
+        # 42: '最低价',
+        43: '振幅(%)',
+        # 44: '流通市值',
+        # 45: '总市值',
+        # 46: '市净率',
+        # 47: '涨停价',
+        # 48: '跌停价',
     }
-    return stock_info
+    detail_data = extract_stock_data(detail_url)
+    detail_list = process_stock_data(detail_data, detail_index_to_values)
+    print_as_table(detail_list)
 
-def fetch_and_print_stock_info(stock_code):
-    # Fetch the stock data
-    stock_data = tx_get_stock_data(stock_code)
+    # fund_url = 'http://qt.gtimg.cn/q=' + concat_code(*codes, prefix="ff_")
+    # fund_comment_to_index = {
+    #     0: '代码',
+    #     1: '主力流入',
+    #     2: '主力流出',
+    #     3: '主力净流入',
+    #     # 4: '主力流入百分比(主力净流入/资金流入流出总和)',
+    #     5: '散户流入',
+    #     6: '散户流出',
+    #     7: '散户净流入',
+    #     # 8: '散户流入百分比(散户净流入/资金流入流出总和)',
+    #     # 9: '资金流入或流出总和 1+2 or 5+6',
+    #     13: '日期',
+    # }
+    # fund_data = extract_stock_data(fund_url)
+    # fund_list = process_stock_data(fund_data, fund_comment_to_index)
+    # print_as_table(fund_list)
 
-    # Convert the dictionary to a list of tuples for tabulate
-    table_data = [list(stock_data.keys()), list(stock_data.values())]
-
-    # Print the data in a table format
-    print(tabulate(table_data,tablefmt='fancy_grid'))
-
-
-
-def fetch_stock_data(stock_code):
-    # 新浪财经API的URL
-    url = 'http://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData'
-    # [{'day': '2024-01-26', 'open': '5.480', 'high': '5.710', 'low': '5.420', 'close': '5.570', 'volume': '54359000'}]
-    # 根据股票代码推断交易所
-    exchange = determine_exchange(stock_code)
-    # 构建请求参数
-    params = {
-        'symbol': f'{exchange}{stock_code}',  # 完整的股票代码
-        'scale': '240',  # 时间间隔，240表示4小时
-        'ma': 'no',  # 是否返回均线数据，no表示不返回
-        'datalen': '1'  # 返回数据的数量，这里设置为1，因为我们只需要最新的数据
-    }
-
-    response = requests.get(url, params=params)
-    if response.status_code != 200:
-        print(f"Request failed with status {response.status_code}")
-    return response.json()
-
-
-
-# 通过fetch_stock_data接口返回的day判断当前时间是否在交易时间内
-def is_trading_time(stock_code):
-    data = fetch_stock_data(stock_code)
-    if data:
-        day = data[0]['day']
-        if day == time.strftime("%Y-%m-%d", time.localtime()):
-            return True
-        else:
-            return False
-    else:
-        return False
+if __name__ == '__main__':
+    get_stock_real_time_data("603333","600066","603099")
     
-    
-def create_data(stock_dict):
-    for code in stock_dict.keys():
-        data = fetch_stock_data(code)
-        if data:
-            stock_dict[code]['open'] = data[0]['open']
-    stock_list = [{'code': code, 'market': 'ab', 'type': 'stock'} for code, stock_info in stock_dict.items()]
-    return {
-        'stock': json.dumps(stock_list),
-        'finClientType': 'pc'
-    }
-
-
-
-create_data(stock_dict)
-data = create_data(stock_dict)
-response = requests.post('https://finance.pae.baidu.com/selfselect/gettrenddata', headers=headers, data=data)
-response_data = json.loads(response.text)
-
-try:
-    # Extract the lastPrice for each stock
-    if is_trading_time('600519') == False:
-        print(f"非交易时间")
-    while True:
-        print(f"----------------------------------------------------")
-        print(f"{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}")
-        # print("名".ljust(name_width) + "|" + "开".rjust(price_width) + "|" + "现".rjust(price_width) + "|" + "仓R".rjust(rate_width) + "|" + "开R".rjust(rate_width) + "|")
-        for stock_id, stock_data in response_data['Result']['trend'].items():
-            # Extract the stock code from the stock_id
-            stock_code = stock_id.split('_')[-1]
-            if all_stock_info == True:
-                fetch_and_print_stock_info(stock_code)
-            else:
-                # Get the stock info from the stock_dict
-                stock_info = stock_dict.get(stock_code, {"name": "Unknown Stock", "init": 0, "open": 0})
-                # Get the stock name, initial price, and open price from the stock info
-                stock_name = stock_info['name']
-                initial_price = stock_info['init']
-                # Get the last price from the response data and convert it to float
-                last_price = float(stock_data['lastPrice'])
-                # Calculate the increase rate from initial price
-                if initial_price != 0:
-                    increase_rate_init = round((last_price - initial_price) / initial_price * 100, 3)
-                else:
-                    increase_rate_init = 0
-                # Calculate the increase rate from open price
-                open_price = stock_info.get('open')
-                if open_price is not None:
-                    open_price = float(open_price)
-                    if open_price != 0:
-                        increase_rate_open = round((last_price - open_price) / open_price * 100, 3)
-                    else:
-                        increase_rate_open = 0
-                else:
-                    increase_rate_open = 0
-                print(f"{stock_name.ljust(name_width)}|{str(open_price).rjust(price_width)}|{str(last_price).rjust(price_width)}|{str(increase_rate_init).rjust(rate_width)}%|{str(increase_rate_open).rjust(rate_width)}%|")
-        # Pause for 1 second
-        time.sleep(1)
-except KeyboardInterrupt:
-    print("\nstop\n")
