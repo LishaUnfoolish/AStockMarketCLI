@@ -1,7 +1,29 @@
 from urllib import request
 import re
 from tabulate import tabulate
+import time
+import logging
+import os
 
+try :
+    from pynput import keyboard
+except ImportError:
+    import subprocess
+    import sys
+    subprocess.check_call([sys.executable, "-m", "pip", "install", 'pynput'])
+    from pynput import keyboard
+
+try :
+    from tabulate import tabulate
+except ImportError:
+    import subprocess
+    import sys
+    subprocess.check_call([sys.executable, "-m", "pip", "install", 'tabulate'])
+    from tabulate import tabulate
+
+
+
+logging.basicConfig(filename='/tmp/stock.log', level=logging.INFO)
 def extract_stock_data(url, encoding="gb2312"):
     """
     抽取股票数据
@@ -35,11 +57,6 @@ def process_stock_data(stock_arr, index_dict):
         arr = rest.split("~")
         for x in range(len(arr)):
             if x in index_dict.keys():
-                if x == 0:
-                    print(arr[x])
-                    match_res = re.match("^([sh|sz]{2})(\d{6})$", arr[x])
-                    if match_res:
-                        arr[x] = match_res.group(2)
                 inner_map[index_dict[x]] = arr[x]
         result_list.append(inner_map)
     return result_list
@@ -64,8 +81,10 @@ def concat_code(*codes, prefix="", suffix=","):
 def print_as_table(data):
     headers = data[0].keys()
     rows = [x.values() for x in data]
-
-    print(tabulate(rows, headers, tablefmt="grid"))
+    info = tabulate(rows, headers, tablefmt="grid")
+    logging.info(info)
+    return info
+     
 
 def determine_exchange(stock_code):
     if stock_code.startswith('60'):
@@ -129,7 +148,7 @@ def get_stock_real_time_data(*codes):
     }
     detail_data = extract_stock_data(detail_url)
     detail_list = process_stock_data(detail_data, detail_index_to_values)
-    print_as_table(detail_list)
+    return print_as_table(detail_list)
 
     # fund_url = 'http://qt.gtimg.cn/q=' + concat_code(*codes, prefix="ff_")
     # fund_comment_to_index = {
@@ -149,9 +168,26 @@ def get_stock_real_time_data(*codes):
     # fund_list = process_stock_data(fund_data, fund_comment_to_index)
     # print_as_table(fund_list)
 
-if __name__ == '__main__':
-    get_stock_real_time_data("603333","600066","603099")
-    
 
+
+
+paused = False
+def on_press(key):
+    global paused
+    if key == keyboard.Key.space:
+        paused = not paused
+        os.system('cls' if os.name == 'nt' else 'clear')
+
+if __name__ == '__main__':
+    listener = keyboard.Listener(on_press=on_press)
+    listener.start()
+    try:
+        while True:
+            if not paused:
+                os.system('cls' if os.name == 'nt' else 'clear')
+                print(get_stock_real_time_data("603333","600066","603099"))
+            time.sleep(1)
+    except KeyboardInterrupt:
+        os.system('cls' if os.name == 'nt' else 'clear')
     
 
