@@ -27,9 +27,9 @@ def create_data(stock_dict):
     }
 
 stock_dict = {
-    '603333': {'name': '尚纬', 'init': 5.55},
-    '600066': {'name': '宇通', 'init': 15.50},
-    '603099': {'name': '长白山', 'init': 33.10}
+    '603333': {'name': '尚', 'init': 6.505},
+    '600066': {'name': '宇', 'init': 16.070},
+    '603099': {'name': '长', 'init': 32.773}
 }
 data = create_data(stock_dict)
 response = requests.post('https://finance.pae.baidu.com/selfselect/gettrenddata', headers=headers, data=data)
@@ -53,8 +53,8 @@ try:
                 increase_rate = (last_price - initial_price) / initial_price * 100
             else:
                 increase_rate = 0
-            print(f"{stock_name}, Last Price: {last_price}, Increase Rate: {increase_rate}%")
-
+            print(f"{stock_name}|{last_price}|{increase_rate}%")
+        print(f"----------------------------------------------------")
         # Pause for 1 second
         time.sleep(1)
 except KeyboardInterrupt:
