@@ -92,17 +92,20 @@ def determine_exchange(stock_code):
     elif stock_code.startswith('00') or stock_code.startswith('300'):
         return 'sz'
     else:
-        raise ValueError("股票代码格式不正确，应以'60'或'00'开头")
+        return ''
 
 def get_stock_real_time_data(*codes):
+    #在codes添加上证指数
+    codes = list(codes) 
+    codes.append("sh000001") 
     detail_url = "http://qt.gtimg.cn/q=" + concat_code(*codes)
     detail_index_to_values = {
         1: '名称',
         # 2: '股票代码',
-        # 3: '现价',
+        3: '现价',
         # 4: '昨收',
         # 5: '开盘价',
-        6: '成交量',
+        # 6: '成交量',
         # 7: '外盘（不准）',
         # 8: '内盘（不准）',
         # 9: '买一',
@@ -189,5 +192,3 @@ if __name__ == '__main__':
             time.sleep(1)
     except KeyboardInterrupt:
         os.system('cls' if os.name == 'nt' else 'clear')
-    
-
