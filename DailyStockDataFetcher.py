@@ -118,5 +118,3 @@ try:
         time.sleep(1)
 except KeyboardInterrupt:
     print("\nstop\n")
-except KeyboardInterrupt:
-    print("\nstop\n")
