@@ -84,10 +84,10 @@ response = requests.post('https://finance.pae.baidu.com/selfselect/gettrenddata'
 response_data = json.loads(response.text)
 
 try:
+    # Extract the lastPrice for each stock
+    if is_trading_time('600519') == False:
+        print(f"非交易时间")
     while True:
-        # Extract the lastPrice for each stock
-        if is_trading_time('600519') == False:
-            print(f"非交易时间")
         for stock_id, stock_data in response_data['Result']['trend'].items():
             # Extract the stock code from the stock_id
             stock_code = stock_id.split('_')[-1]
