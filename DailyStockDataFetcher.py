@@ -141,7 +141,7 @@ def get_stock_real_time_data(*codes):
         # 39: '市盈率',
         # 40: '',  # 这里没有提供对应的值，所以留空
         # 41: '最高价',  # 注意这里重复了，可能是因为数据错误或者需要合并
-        # 42: '最低价',
+        42: '最低价',
         43: '振幅(%)',
         # 44: '流通市值',
         # 45: '总市值',
@@ -177,7 +177,7 @@ def get_stock_real_time_data(*codes):
 paused = False
 def on_press(key):
     global paused
-    if key == keyboard.Key.esc:
+    if key == keyboard.Key.alt_r:
         paused = not paused
         os.system('cls' if os.name == 'nt' else 'clear')
 
