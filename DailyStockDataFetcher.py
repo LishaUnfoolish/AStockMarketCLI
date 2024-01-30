@@ -188,8 +188,8 @@ if __name__ == '__main__':
         while True:
             if not paused:
                 os.system('cls' if os.name == 'nt' else 'clear')
-                print(get_stock_real_time_data("603333","600066","603099"))
-                print(get_stock_real_time_data("601083","002415","002230","600482"))
+                print(get_stock_real_time_data("603333","600066","603099","601083"))
+                print(get_stock_real_time_data("002415","002230","600482"))
             time.sleep(1)
     except KeyboardInterrupt:
         os.system('cls' if os.name == 'nt' else 'clear')
