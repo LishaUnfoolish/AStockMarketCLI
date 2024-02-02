@@ -190,7 +190,6 @@ if __name__ == '__main__':
                 os.system('cls' if os.name == 'nt' else 'clear')
                 print(get_stock_real_time_data("000429","600900","600066","603099","600482"))
                 print(get_stock_real_time_data("002415","002230","000938","002472"))
-                # print(get_stock_real_time_data('000755', '600141', '002092', '002490', '002498', '300157', '600777', '002554', '002828', '603727', '000968', '000407', '605090', '600256', '601808', '000554'))
                 
             time.sleep(1)
     except KeyboardInterrupt:
